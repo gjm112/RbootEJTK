@@ -24,6 +24,7 @@ jtk1 <- function(timepoints, values, phase = 12, phase_shift = 0){
     return(c(tau, pval))
 }
 
+#1. Turn this into a function
 phase_vec <- seq(4,20,1)
 phase_shift_vec <- seq(0,8,4)
 results <- data.frame()
@@ -36,7 +37,16 @@ for (p in phase_vec){
 
 results %>% arrange(pval)
 
-
+#Permute the values and calculate a null distribution.  
+eJTK <- function(timepoints, values, phase_vec, phase_shift_vec, nsim = 10){
+    out <- replicate(nsim,jtk1(timepoints, 
+       values, 
+       sample(phase_vec,1), 
+       sample(phase_shift_vec,1)))
+  out <- data.frame(t(out))
+  names(out) <- c("tau","pval")
+    return(out)
+}
   
 eJTK <- function(timepoints, values, phase_vec, phase_shift_vec, nsim = 10){
   out <- replicate(nsim,jtk1(timepoints, 
