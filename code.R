@@ -1,3 +1,4 @@
+
 ##########################################
 # JTK_Cycle 
 ##########################################
@@ -6,18 +7,20 @@
 # # install MetaCycle
 # devtools::install_github('gangwug/MetaCycle')
 library(tidyverse)
-x <- seq(0,46,1)
+x <- seq(0,48,1)
 #y <- cos(2*pi*x/12) + rnorm(length(x),0,10)
-asymmetry <- 2
-phase_shift <- 4
+asymmetry <- 6 
+phase_shift <- 2
 phase <- 8
-x <- x%%phase
-y <- cos(2*pi*(x - phase_shift)/(2*asymmetry)) * (x <= asymmetry) + 
-  cos(2*pi*(x - phase_shift - phase)/(2*(phase - asymmetry))) * (x > asymmetry) + 
-  rnorm(length(x), 0, 1)
-x <- seq(0,46,1)
+x <- (x + phase_shift)%%phase
+y <- cos(2*pi*(x - phase_shift)/(2*asymmetry)) * ((x - phase_shift) <= asymmetry) + 
+  cos(2*pi*(x - phase_shift - phase)/(2*(phase - asymmetry))) * ((x - phase_shift) > asymmetry) + 
+  rnorm(length(x), 0, 0)
+x <- seq(0,48,1) + phase_shift
+
 #y <- rcauchy(length(x))
-plot(x, y, type = "l", xlim = c(0, 12))
+plot(x, y, type = "l", xlim = c(0, 10))
+abline(v = 2)
 plot(x, y, type = "l", xlim = c(12, 24))
 plot(x, y, type = "l", xlim = c(24, 36))
 
@@ -85,6 +88,84 @@ eJTK <- function(timepoints, values, phase_vec, phase_shift_vec, asymmetry_vec, 
   
 eJTK(timepoints, values, phase_vec, phase_shift_vec, asymmetry_vec)
 
+#bootJTK
+#if (!require("BiocManager", quietly = TRUE))
+  #install.packages("BiocManager")
+# The following initializes usage of Bioc devel
+#BiocManager::install(version='devel')
+#BiocManager::install("limma")
+library(limma)
+
+#Step 1 of BooteJTK
+reps <- 4
+x <- seq(0,24,1)
+y <- matrix(NA, nrow = 4, ncol = length(x))
+for (q in 1:reps){
+x <- seq(0,24,1)
+#y <- cos(2*pi*x/12) + rnorm(length(x),0,10)
+asymmetry <- 4
+phase_shift <- 4
+phase <- 8
+x <- (x - phase_shift) %% phase 
+y[q,] <- cos(2*pi*(x - phase_shift)/(2*asymmetry)) * (x <= asymmetry) + 
+  cos(2*pi*(x - phase_shift - phase)/(2*(phase - asymmetry))) * (x > asymmetry) + 
+  rnorm(length(x), 0, 0)
+x <- seq(0,24,1)
+}
+
+plot(x,y[1,], type = "l", xlim = c(0,8))
+
+
+#y <- matrix(rpois(reps*length(x),10), ncol = reps)
+xbar <- apply(y, 1, mean)
+greg <- vooma(y, plot = TRUE)
+#variances
+1/greg$weights[,1] 
+#standard errors
+sehat <- sqrt(1/greg$weights[,1])/sqrt(reps)
+test <- vash(sehat,reps)
+sd.post <- test$sd.post
+
+#Now bootstrap
+boot <- rnorm(length(x),xbar, sd.post)
+boot
+
+fuck <- eJTK(x,boot,phase_vec, phase_shift_vec, asymmetry_vec)
+
+plot(test$sd.post,sehat, asp = 1)
+abline(a = 0, b = 1)
+
+
+#boostrap
+
+
+
+
+
+
+#100 time points, 4 replicates
+reps <- 1000
+
+y <- matrix(rpois(reps*100,100), ncol = reps)
+greg <- vooma(y, plot = TRUE)
+plot(cbind(apply(y,1,function(x){var(x)}),(1/greg$weights[,1])))
+apply(y,1,function(x){var(x)})
+(1/greg$weights[,1])
+
+
+cbind(apply(y,1,function(x){var(x)}),(1/greg$weights[,1]))
+plot(cbind(apply(y,1,function(x){var(x)}),(1/greg$weights[,1])))
+
+
+(cbind(1/greg$weights[,1],apply((y),1,var)))
+abline(a = 0, b = 1)
+abline(v = 100)
+
+
+
+
+
+
 
 #eJTK
 ejtk_null <- eJTK(timepoints, 
@@ -101,6 +182,7 @@ for (i in 1:nrow(results)){
 }
 
 results %>% arrange(epval)
+
 
 
 
