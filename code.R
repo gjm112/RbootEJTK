@@ -12,11 +12,11 @@ x <- seq(0,48,1)
 asymmetry <- 6 
 phase_shift <- 2
 phase <- 8
-x <- (x + phase_shift)%%phase
+x <- (x) %% phase
 y <- cos(2*pi*(x - phase_shift)/(2*asymmetry)) * ((x - phase_shift) <= asymmetry) + 
   cos(2*pi*(x - phase_shift - phase)/(2*(phase - asymmetry))) * ((x - phase_shift) > asymmetry) + 
   rnorm(length(x), 0, 0)
-x <- seq(0,48,1) + phase_shift
+x <- seq(0,48,1) 
 
 #y <- rcauchy(length(x))
 plot(x, y, type = "l", xlim = c(0, 10))
